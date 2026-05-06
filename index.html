@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta Naturgy — Suministros</title>
+
+  <!-- Fuentes: Syne (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ══════════════════════════════════════════
+       VARIABLES Y RESET
+    ══════════════════════════════════════════ */
+    :root {
+      --bg:          #0d0f14;
+      --surface:     #13161e;
+      --surface2:    #1a1e2a;
+      --border:      rgba(255,255,255,0.07);
+      --border2:     rgba(255,255,255,0.12);
+      --text:        #e8eaf2;
+      --muted:       #6b7280;
+      --accent:      #f97316;       /* naranja energía */
+      --accent-glow: rgba(249,115,22,0.25);
+      --green:       #22c55e;
+      --green-bg:    rgba(34,197,94,0.1);
+      --red:         #ef4444;
+      --red-bg:      rgba(239,68,68,0.1);
+      --orange:      #f59e0b;
+      --orange-bg:   rgba(245,158,11,0.1);
+      --blue:        #3b82f6;
+      --blue-bg:     rgba(59,130,246,0.1);
+      --luz-color:   #facc15;
+      --luz-bg:      rgba(250,204,21,0.08);
+      --gas-color:   #f97316;
+      --gas-bg:      rgba(249,115,22,0.08);
+
+      --radius:      16px;
+      --radius-sm:   10px;
+      --shadow:      0 4px 32px rgba(0,0,0,0.5);
+      --font-display:'Syne', sans-serif;
+      --font-body:   'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 15px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Textura de fondo */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 0%, rgba(249,115,22,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(59,130,246,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ══════════════════════════════════════════
+       LAYOUT
+    ══════════════════════════════════════════ */
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(249,115,22,0.12);
+      border: 1px solid rgba(249,115,22,0.25);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 50px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 14px;
+    }
+
+    .header h1 span {
+      background: linear-gradient(135deg, var(--accent), #facc15);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 300;
+      max-width: 440px;
+      margin: 0 auto;
+    }
+
+    /* ── SEARCH CARD ── */
+    .search-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .search-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 15px;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-btn {
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      padding: 14px 24px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(249,115,22,0.3);
+    }
+
+    .search-btn:hover:not(:disabled) {
+      background: #ea6c0f;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(249,115,22,0.45);
+    }
+
+    .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .search-hint {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-hint span { display: flex; align-items: center; gap: 5px; }
+
+    /* Sugerencias dropdown */
+    .suggestions-box {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      margin-top: 8px;
+      overflow: hidden;
+      display: none;
+      box-shadow: var(--shadow);
+    }
+    .suggestions-box.show { display: block; }
+
+    .suggestion-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--surface2); }
+    .suggestion-item .sug-label { font-weight: 500; }
+    .suggestion-item .sug-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    /* Selección de piso */
+    .floor-select-box {
+      margin-top: 12px;
+      display: none;
+    }
+    .floor-select-box.show { display: block; }
+    .floor-select-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .floor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+    }
+    .floor-btn {
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .floor-btn:hover { border-color: var(--accent); background: rgba(249,115,22,0.05); }
+
+    /* ── LOADER ── */
+    .loader {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 48px 20px;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .loader.show { display: flex; }
+
+    .loader-ring {
+      width: 52px;
+      height: 52px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    .loader-text {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .loader-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-align: left;
+      margin-top: 4px;
+    }
+    .loader-step {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.4;
+      transition: opacity 0.3s, color 0.3s;
+    }
+    .loader-step.active { opacity: 1; color: var(--accent); }
+    .loader-step.done   { opacity: 1; color: var(--green); }
+    .loader-step .step-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ── ERROR ── */
+    .error-box {
+      display: none;
+      background: var(--red-bg);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      color: var(--red);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    .error-box.show { display: flex; align-items: center; gap: 10px; }
+
+    /* ── RESULTADOS ── */
+    .results {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 0.4s ease;
+    }
+    .results.show { display: flex; }
+
+    /* Sección de dirección */
+    .result-address {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+
+    .result-address-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .result-address-main {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .result-address-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Grid de tarjetas */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    /* Tarjeta de suministro */
+    .supply-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .supply-card-header {
+      padding: 18px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .supply-card-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .supply-card.luz .supply-card-title { color: var(--luz-color); }
+    .supply-card.gas .supply-card-title { color: var(--gas-color); }
+
+    .supply-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+    .supply-card.luz::before { background: linear-gradient(90deg, var(--luz-color), transparent); }
+    .supply-card.gas::before { background: linear-gradient(90deg, var(--gas-color), transparent); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 50px;
+    }
+    .status-badge.green { background: var(--green-bg);  color: var(--green);  }
+    .status-badge.red   { background: var(--red-bg);    color: var(--red);    }
+    .status-badge.orange{ background: var(--orange-bg); color: var(--orange); }
+    .status-badge.gray  { background: rgba(107,114,128,0.1); color: var(--muted); }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .supply-card-body {
+      padding: 20px 22px;
+    }
+
+    /* CUPS */
+    .cups-block {
+      margin-bottom: 18px;
+    }
+
+    .cups-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .cups-value {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--surface2);
+      padding: 8px 12px;
+      border-radius: 8px;
+      word-break: break-all;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .cups-value:hover { background: var(--border2); }
+    .cups-value::after {
+      content: '📋';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .cups-value:hover::after { opacity: 1; }
+    .cups-value.copied::after { content: '✓'; color: var(--green); opacity: 1; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stat-unit {
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 3px;
+    }
+
+    /* Importe estimado */
+    .importe-box {
+      background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(250,204,21,0.05));
+      border: 1px solid rgba(249,115,22,0.2);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .importe-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .importe-sub { font-size: 11px; color: var(--muted); opacity: 0.7; }
+
+    .importe-value {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .importe-value sup { font-size: 14px; }
+
+    /* Tarjeta de scoring */
+    .scoring-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .scoring-card-header {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .scoring-card-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .scoring-result-display {
+      padding: 24px 22px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .scoring-icon {
+      font-size: 40px;
+      flex-shrink: 0;
+    }
+
+    .scoring-text-main {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .scoring-text-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .scoring-result-display.es-scoring   { background: var(--red-bg);   }
+    .scoring-result-display.no-scoring   { background: var(--green-bg); }
+    .scoring-result-display.es-scoring .scoring-text-main { color: var(--red);   }
+    .scoring-result-display.no-scoring .scoring-text-main { color: var(--green); }
+
+    /* Acciones finales */
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 18px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(249,115,22,0.3);
+    }
+    .action-btn.primary:hover { background: #ea6c0f; }
+    .action-btn.copied { border-color: var(--green); color: var(--green); }
+
+    /* Sección scoring en resultados */
+    .scoring-inline-section {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+    .scoring-inline-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .scoring-inline-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .scoring-inline-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 14px;
+      padding: 11px 16px;
+      border-radius: var(--radius-sm);
+      outline: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .scoring-inline-input::placeholder { text-transform: none; letter-spacing: 0; color: var(--muted); }
+    .scoring-inline-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    .scoring-inline-btn {
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 11px 20px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    .scoring-inline-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .scoring-inline-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .scoring-inline-result {
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .scoring-inline-result.show { display: flex; }
+    .scoring-inline-result.es-scoring  { background: var(--red-bg);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+    .scoring-inline-result.no-scoring  { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .scoring-inline-result.error { background: var(--orange-bg); color: var(--orange); border: 1px solid rgba(245,158,11,0.2); }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      padding-top: 40px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* ══════════════════════════════════════════
+       ANIMACIONES
+    ══════════════════════════════════════════ */
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeUp  {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+    @media (max-width: 540px) {
+      .app { padding: 24px 16px 60px; }
+      .search-row { flex-direction: column; }
+      .search-btn { width: 100%; padding: 15px; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .importe-value { font-size: 24px; }
+      .actions-row { flex-direction: column; }
+      .action-btn { justify-content: center; }
+    }
+
+    /* Toast de copiado */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--green);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 9999;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-badge">⚡ Suministros Energéticos</div>
+      <h1>Consulta <span>Naturgy</span></h1>
+      <p>Introduce una dirección, CUPS o DNI para obtener todos los datos del suministro al instante.</p>
+    </header>
+
+    <!-- BUSCADOR -->
+    <div class="search-card">
+      <div class="search-label">¿Qué quieres consultar?</div>
+      <div class="search-row">
+        <input
+          type="text"
+          id="main-input"
+          class="search-input"
+          placeholder="Dirección, CUPS (ES00… / ES02…) o DNI/NIE"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="search-btn" class="search-btn" onclick="handleSearch()">
+          CONSULTAR
+        </button>
+      </div>
+      <div class="search-hint">
+        <span>📍 C/ Gran Vía 1, Madrid</span>
+        <span>🔌 ES0021…</span>
+        <span>🔥 ES0221…</span>
+        <span>🔐 12345678Z</span>
+      </div>
+
+      <!-- Sugerencias de dirección -->
+      <div id="suggestions-box" class="suggestions-box"></div>
+
+      <!-- Selección de piso -->
+      <div id="floor-select-box" class="floor-select-box">
+        <div class="floor-select-label">Selecciona tu vivienda</div>
+        <div id="floor-grid" class="floor-grid"></div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="error-box" class="error-box">
+      <span>⚠️</span>
+      <span id="error-msg">Ha ocurrido un error.</span>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loader" class="loader">
+      <div class="loader-ring"></div>
+      <div>
+        <div class="loader-text">Consultando datos…</div>
+        <div class="loader-steps">
+          <div class="loader-step" id="step-1"><span class="step-dot"></span>Buscando en la base de datos</div>
+          <div class="loader-step" id="step-2"><span class="step-dot"></span>Obteniendo estado del suministro</div>
+          <div class="loader-step" id="step-3"><span class="step-dot"></span>Calculando consumo y tarifa</div>
+          <div class="loader-step" id="step-4"><span class="step-dot"></span>Preparando resultados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div id="results" class="results"></div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      Consulta informativa basada en datos públicos del sistema eléctrico español.
+    </footer>
+  </div>
+
+  <div id="toast" class="toast">✓ Copiado al portapapeles</div>
+
+  <script>
+    // ════════════════════════════════════════════════════════════════
+    // CONFIGURACIÓN
+    // ════════════════════════════════════════════════════════════════
+
+    // ⚠️ CAMBIA ESTA URL por la URL real de tu backend en Render/Railway
+    const API_BASE = 'https://naturgy-api.onrender.com';
+    // Ejemplo: 'https://naturgy-api.onrender.com'
+
+    // ════════════════════════════════════════════════════════════════
+    // ESTADO GLOBAL
+    // ════════════════════════════════════════════════════════════════
+    let pendingOptions     = [];  // opciones de piso pendientes de selección
+    let pendingSuggestions = [];  // sugerencias de dirección pendientes
+    let loaderTimer        = null;
+
+    // ════════════════════════════════════════════════════════════════
+    // UTILIDADES UI
+    // ════════════════════════════════════════════════════════════════
+
+    function showLoader() {
+      document.getElementById('loader').classList.add('show');
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('error-box').classList.remove('show');
+      document.getElementById('suggestions-box').classList.remove('show');
+      document.getElementById('floor-select-box').classList.remove('show');
+      document.getElementById('search-btn').disabled = true;
+
+      // Animar pasos del loader
+      const steps = ['step-1','step-2','step-3','step-4'];
+      steps.forEach(id => document.getElementById(id).className = 'loader-step');
+      let i = 0;
+      loaderTimer = setInterval(() => {
+        if (i > 0) document.getElementById(steps[i-1]).classList.add('done');
+        if (i < steps.length) {
+          document.getElementById(steps[i]).classList.add('active');
+          i++;
+        } else {
+          clearInterval(loaderTimer);
+        }
+      }, 900);
+    }
+
+    function hideLoader() {
+      clearInterval(loaderTimer);
+      document.getElementById('loader').classList.remove('show');
+      document.getElementById('search-btn').disabled = false;
+    }
+
+    function showError(msg) {
+      hideLoader();
+      document.getElementById('error-msg').textContent = msg;
+      document.getElementById('error-box').classList.add('show');
+    }
+
+    function showToast(msg = '✓ Copiado al portapapeles') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => showToast());
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // FORMATEO DE DATOS
+    // ════════════════════════════════════════════════════════════════
+
+    function formatCupsLuz(cups) {
+      const c = cups.replace(/\s/g,'').toUpperCase();
+      if (c.length >= 20) {
+        return [c.slice(0,6), c.slice(6,9), c.slice(9,12), c.slice(12,15), c.slice(15,18), c.slice(18,20), c.slice(20)].filter(p=>p).join(' ');
+      }
+      return cups;
+    }
+
+    function formatCupsGas(cups) {
+      const c = cups.replace(/\s/g,'').toUpperCase();
+      if (c.length >= 18) {
+        return [c.slice(0,4), c.slice(4,6), c.slice(6,9), c.slice(9,12), c.slice(12,15), c.slice(15,18), c.slice(18)].filter(p=>p).join(' ');
+      }
+      return cups;
+    }
+
+    function statusBadgeHtml(estado) {
+      if (!estado) return '';
+      const color = estado.color || 'gray';
+      return `<span class="status-badge ${color}"><span class="status-dot"></span>${estado.texto}</span>`;
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // RENDER DE RESULTADOS
+    // ════════════════════════════════════════════════════════════════
+
+    function renderResults(data) {
+      hideLoader();
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+      container.classList.add('show');
+
+      // ── Scoring directo ─────────────────────────────────────────
+      if (data.tipo === 'scoring') {
+        const s = data.scoring;
+        const cls = s.esScoring ? 'es-scoring' : 'no-scoring';
+        const icon = s.esScoring ? '⚠️' : '✅';
+        const texto = s.esScoring ? 'ES SCORING' : 'NO ES SCORING';
+        const sub   = s.esScoring
+          ? 'El DNI consultado tiene restricciones de crédito. No se puede contratar.'
+          : 'El DNI consultado no presenta restricciones. Puede contratar con normalidad.';
+
+        container.innerHTML = `
+          <div class="scoring-card">
+            <div class="scoring-card-header">
+              <span style="font-size:20px">🔐</span>
+              <span class="scoring-card-title">Resultado de Scoring</span>
+            </div>
+            <div class="scoring-result-display ${cls}">
+              <div class="scoring-icon">${icon}</div>
+              <div>
+                <div class="scoring-text-main">${texto}</div>
+                <div class="scoring-text-sub">${sub}</div>
+              </div>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button class="action-btn" onclick="resetAll()">← Nueva consulta</button>
+          </div>
+        `;
+        return;
+      }
+
+      // ── Dirección ───────────────────────────────────────────────
+      let html = '';
+
+      if (data.direccion) {
+        const d = data.direccion;
+        const calleNum = [d.calle, d.numero].filter(Boolean).join(' ');
+        const pisoStr  = d.piso || '';
+        const localidad = [d.codigoPostal, d.municipio].filter(Boolean).join(' — ');
+        const prov = d.provincia || '';
+
+        html += `
+          <div class="result-address">
+            <div class="result-address-label">📍 Dirección del suministro</div>
+            <div class="result-address-main">${calleNum}${pisoStr ? `  <span style="font-weight:400;font-size:15px;color:var(--muted)">${pisoStr}</span>` : ''}</div>
+            ${localidad ? `<div class="result-address-sub">${localidad}${prov ? ` · ${prov}` : ''}</div>` : ''}
+          </div>
+        `;
+      }
+
+      // ── Tarjetas de suministro ──────────────────────────────────
+      html += '<div class="cards-grid">';
+
+      if (data.luz) {
+        const l = data.luz;
+        const cupsF = formatCupsLuz(l.cups);
+        html += `
+          <div class="supply-card luz">
+            <div class="supply-card-header">
+              <div class="supply-card-title">⚡ Electricidad</div>
+              ${statusBadgeHtml(l.estado)}
+            </div>
+            <div class="supply-card-body">
+              <div class="cups-block">
+                <div class="cups-label">CUPS</div>
+                <div class="cups-value" onclick="copyThis('${l.cups}', this)" title="Clic para copiar">${cupsF}</div>
+              </div>
+              <div class="stats-grid">
+                ${l.consumoAnual !== null ? `<div class="stat-item"><div class="stat-label">Consumo anual</div><div class="stat-value">${l.consumoAnual.toLocaleString('es-ES')}<span class="stat-unit">kWh</span></div></div>` : ''}
+                ${l.potenciaP1 !== null ? `<div class="stat-item"><div class="stat-label">Potencia P1</div><div class="stat-value">${l.potenciaP1}<span class="stat-unit">kW</span></div></div>` : ''}
+                ${l.potenciaP2 !== null ? `<div class="stat-item"><div class="stat-label">Potencia P2</div><div class="stat-value">${l.potenciaP2}<span class="stat-unit">kW</span></div></div>` : ''}
+              </div>
+              ${l.importeMensual !== null ? `
+                <div class="importe-box">
+                  <div>
+                    <div class="importe-label">Importe estimado</div>
+                    <div class="importe-sub">media mensual con Naturgy</div>
+                  </div>
+                  <div class="importe-value"><sup>~</sup>${l.importeMensual}<sup>€</sup></div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      if (data.gas) {
+        const g = data.gas;
+        const cupsF = formatCupsGas(g.cups);
+        const tarifaClean = g.tarifa ? g.tarifa.replace('.', '') : null;
+        html += `
+          <div class="supply-card gas">
+            <div class="supply-card-header">
+              <div class="supply-card-title">🔥 Gas Natural</div>
+              ${statusBadgeHtml(g.estado)}
+            </div>
+            <div class="supply-card-body">
+              <div class="cups-block">
+                <div class="cups-label">CUPS ${tarifaClean ? `· <span style="color:var(--accent)">${tarifaClean}</span>` : ''}</div>
+                <div class="cups-value" onclick="copyThis('${g.cups}', this)" title="Clic para copiar">${cupsF}</div>
+              </div>
+              <div class="stats-grid">
+                ${g.consumoAnual !== null ? `<div class="stat-item"><div class="stat-label">Consumo anual</div><div class="stat-value">${g.consumoAnual.toLocaleString('es-ES')}<span class="stat-unit">kWh</span></div></div>` : ''}
+                ${tarifaClean ? `<div class="stat-item"><div class="stat-label">Tarifa de acceso</div><div class="stat-value">${tarifaClean}</div></div>` : ''}
+              </div>
+              ${g.importeMensual !== null ? `
+                <div class="importe-box">
+                  <div>
+                    <div class="importe-label">Importe estimado</div>
+                    <div class="importe-sub">media mensual con Naturgy</div>
+                  </div>
+                  <div class="importe-value"><sup>~</sup>${g.importeMensual}<sup>€</sup></div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      html += '</div>'; // fin cards-grid
+
+      // ── Ningún suministro encontrado ────────────────────────────
+      if (!data.luz && !data.gas) {
+        html += `
+          <div style="text-align:center;padding:32px;color:var(--muted)">
+            <div style="font-size:36px;margin-bottom:12px">🔍</div>
+            <div style="font-size:15px">No se encontraron suministros para esta dirección.</div>
+          </div>
+        `;
+      }
+
+      // ── Scoring inline ──────────────────────────────────────────
+      html += `
+        <div class="scoring-inline-section">
+          <div class="scoring-inline-title">🔐 Verificar DNI / NIE</div>
+          <div class="scoring-inline-row">
+            <input type="text" id="scoring-input" class="scoring-inline-input" placeholder="Introduce DNI o NIE" maxlength="9" />
+            <button id="scoring-btn" class="scoring-inline-btn" onclick="checkScoring()">Verificar</button>
+          </div>
+          <div id="scoring-result" class="scoring-inline-result"></div>
+        </div>
+      `;
+
+      // ── Acciones ─────────────────────────────────────────────────
+      html += `
+        <div class="actions-row">
+          <button class="action-btn primary" id="copy-all-btn" onclick="copyAll(${JSON.stringify(data).replace(/"/g, '&quot;')})">📋 Copiar todo</button>
+          <button class="action-btn" onclick="resetAll()">← Nueva consulta</button>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      // Listener scoring auto (9 caracteres)
+      const scoringInput = document.getElementById('scoring-input');
+      if (scoringInput) {
+        scoringInput.addEventListener('input', function() {
+          const v = this.value.trim().toUpperCase();
+          if (v.length === 9 && (/^[0-9]{8}[A-Z]$/.test(v) || /^[XYZ][0-9]{7}[A-Z]$/.test(v))) {
+            setTimeout(() => checkScoring(), 300);
+          }
+        });
+        scoringInput.addEventListener('keypress', e => { if (e.key === 'Enter') checkScoring(); });
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // SCORING INLINE
+    // ════════════════════════════════════════════════════════════════
+
+    async function checkScoring() {
+      const input = document.getElementById('scoring-input');
+      const btn   = document.getElementById('scoring-btn');
+      const res   = document.getElementById('scoring-result');
+      if (!input || !btn || !res) return;
+
+      const dni = input.value.trim().toUpperCase();
+      if (!dni) return;
+
+      btn.disabled = true;
+      btn.textContent = '…';
+      res.className = 'scoring-inline-result';
+
+      try {
+        const r = await fetch(`${API_BASE}/scoring`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dni })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Error desconocido');
+
+        const s = data.scoring;
+        res.className = `scoring-inline-result show ${s.esScoring ? 'es-scoring' : 'no-scoring'}`;
+        res.innerHTML = `<span>${s.esScoring ? '⚠️' : '✅'}</span><span>${s.texto}</span>`;
+      } catch (err) {
+        res.className = 'scoring-inline-result show error';
+        res.innerHTML = `<span>❌</span><span>${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verificar';
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // COPIAR TODO
+    // ════════════════════════════════════════════════════════════════
+
+    function copyAll(data) {
+      const lines = [];
+      if (data.direccion) {
+        const d = data.direccion;
+        if (d.calle || d.numero) lines.push(`${d.calle} ${d.numero}`.trim());
+        if (d.piso) lines.push(d.piso);
+        if (d.codigoPostal || d.municipio) lines.push(`${d.codigoPostal} ${d.municipio}`.trim());
+        if (d.provincia) lines.push(d.provincia);
+        lines.push('');
+      }
+      if (data.luz) {
+        lines.push(`CUPS LUZ: ${data.luz.cups}`);
+        lines.push(formatCupsLuz(data.luz.cups));
+        if (data.luz.estado) lines.push(`Estado: ${data.luz.estado.texto}`);
+        if (data.luz.consumoAnual !== null) lines.push(`Consumo anual: ${data.luz.consumoAnual} kWh`);
+        if (data.luz.potenciaP1) lines.push(`Potencia P1: ${data.luz.potenciaP1} kW`);
+        if (data.luz.potenciaP2) lines.push(`Potencia P2: ${data.luz.potenciaP2} kW`);
+        if (data.luz.importeMensual !== null) lines.push(`Importe estimado luz: ~${data.luz.importeMensual} €/mes`);
+        lines.push('');
+      }
+      if (data.gas) {
+        lines.push(`CUPS GAS: ${data.gas.cups}`);
+        lines.push(formatCupsGas(data.gas.cups));
+        if (data.gas.tarifa) lines.push(`Tarifa: ${data.gas.tarifa}`);
+        if (data.gas.estado) lines.push(`Estado: ${data.gas.estado.texto}`);
+        if (data.gas.consumoAnual !== null) lines.push(`Consumo anual gas: ${data.gas.consumoAnual} kWh`);
+        if (data.gas.importeMensual !== null) lines.push(`Importe estimado gas: ~${data.gas.importeMensual} €/mes`);
+      }
+      copyToClipboard(lines.join('\n'));
+    }
+
+    function copyThis(text, el) {
+      copyToClipboard(text);
+      el.classList.add('copied');
+      setTimeout(() => el.classList.remove('copied'), 2000);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // BÚSQUEDA PRINCIPAL
+    // ════════════════════════════════════════════════════════════════
+
+    function resetAll() {
+      document.getElementById('main-input').value = '';
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('error-box').classList.remove('show');
+      document.getElementById('suggestions-box').classList.remove('show');
+      document.getElementById('floor-select-box').classList.remove('show');
+      pendingOptions     = [];
+      pendingSuggestions = [];
+    }
+
+    async function handleSearch() {
+      const query = document.getElementById('main-input').value.trim();
+      if (!query || query.length < 3) {
+        showError('Por favor introduce al menos 3 caracteres.');
+        return;
+      }
+
+      showLoader();
+      document.getElementById('error-box').classList.remove('show');
+
+      try {
+        const res  = await fetch(`${API_BASE}/consultar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Error al conectar con el servidor.');
+          return;
+        }
+
+        // ── Selección de dirección ───────────────────────────────
+        if (data.tipo === 'sugerencias') {
+          hideLoader();
+          pendingSuggestions = data.sugerencias;
+          const box = document.getElementById('suggestions-box');
+          box.innerHTML = data.sugerencias.map((s, i) => `
+            <div class="suggestion-item" onclick="selectSuggestion(${i})">
+              <div class="sug-label">📍 ${s.etiqueta}</div>
+            </div>
+          `).join('');
+          box.classList.add('show');
+          return;
+        }
+
+        // ── Selección de piso ────────────────────────────────────
+        if (data.tipo === 'seleccion-piso') {
+          hideLoader();
+          pendingOptions = data.opciones;
+          const grid = document.getElementById('floor-grid');
+          grid.innerHTML = data.opciones.map((o, i) => `
+            <button class="floor-btn" onclick="selectFloor(${i})">🏠 ${o.etiqueta}</button>
+          `).join('');
+          document.getElementById('floor-select-box').classList.add('show');
+          return;
+        }
+
+        // ── Resultado final ──────────────────────────────────────
+        renderResults(data);
+
+      } catch (err) {
+        console.error(err);
+        showError('No se pudo conectar con el servidor. Comprueba que el backend está activo.');
+      }
+    }
+
+    // Seleccionar sugerencia de dirección
+    async function selectSuggestion(index) {
+      const s = pendingSuggestions[index];
+      if (!s) return;
+      document.getElementById('suggestions-box').classList.remove('show');
+      document.getElementById('main-input').value = s.etiqueta;
+      showLoader();
+
+      try {
+        const res = await fetch(`${API_BASE}/consultar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: s.etiqueta })
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Error'); return; }
+        if (data.tipo === 'seleccion-piso') {
+          hideLoader();
+          pendingOptions = data.opciones;
+          const grid = document.getElementById('floor-grid');
+          grid.innerHTML = data.opciones.map((o, i) => `
+            <button class="floor-btn" onclick="selectFloor(${i})">🏠 ${o.etiqueta}</button>
+          `).join('');
+          document.getElementById('floor-select-box').classList.add('show');
+          return;
+        }
+        renderResults(data);
+      } catch(e) {
+        showError('Error al conectar con el servidor.');
+      }
+    }
+
+    // Seleccionar piso
+    async function selectFloor(index) {
+      const opt = pendingOptions[index];
+      if (!opt) return;
+      document.getElementById('floor-select-box').classList.remove('show');
+      showLoader();
+
+      try {
+        const res  = await fetch(`${API_BASE}/consultar/piso`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: opt.id, label: opt.etiqueta })
+        });
+        const data = await res.json();
+        if (!res.ok) { showError(data.error || 'Error'); return; }
+        renderResults(data);
+      } catch(e) {
+        showError('Error al conectar con el servidor.');
+      }
+    }
+
+    // ── Enter en el input ────────────────────────────────────────
+    document.getElementById('main-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') handleSearch();
+    });
+
+    // ── Cerrar sugerencias al hacer clic fuera ───────────────────
+    document.addEventListener('click', function(e) {
+      const input = document.getElementById('main-input');
+      const box   = document.getElementById('suggestions-box');
+      if (!input.contains(e.target) && !box.contains(e.target)) {
+        box.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>
